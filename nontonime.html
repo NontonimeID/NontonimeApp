@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeStream - Nonton Anime Gratis</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .anime-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .anime-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .tab-active {
+            border-bottom: 3px solid #667eea;
+            color: #667eea;
+        }
+        
+        .scroll-container {
+            scrollbar-width: thin;
+            scrollbar-color: #667eea #f1f1f1;
+        }
+        
+        .scroll-container::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+        
+        .video-player {
+            aspect-ratio: 16/9;
+            background: #000;
+        }
+        
+        .comment-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Data Dummy Anime
+        const animeData = [
+            {
+                id: 1,
+                title: "Attack on Titan",
+                titleJP: "進撃の巨人",
+                genres: ["Action", "Drama", "Fantasy"],
+                rating: 9.0,
+                year: 2013,
+                status: "Completed",
+                episodes: 87,
+                duration: "24 min",
+                poster: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&h=400&fit=crop",
+                banner: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1200&h=400&fit=crop",
+                synopsis: "Berabad-abad yang lalu, umat manusia dibantai hampir punah oleh monster raksasa yang disebut Titan. Titan biasanya beberapa cerita tinggi, tampaknya tidak memiliki kecerdasan, memakan manusia dan yang terburuk dari semuanya, tampaknya melakukannya demi kesenangan daripada sebagai sumber makanan.",
+                trailer: "https://www.youtube.com/embed/MGRm4IzK1SQ",
+                studio: "MAPPA",
+                premiered: "Spring 2013"
+            },
+            {
+                id: 2,
+                title: "Demon Slayer",
+                titleJP: "鬼滅の刃",
+                genres: ["Action", "Supernatural"],
+                rating: 8.7,
+                year: 2019,
+                status: "Ongoing",
+                episodes: 44,
+                duration: "24 min",
+                poster: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=300&h=400&fit=crop",
+                banner: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=1200&h=400&fit=crop",
+                synopsis: "Sejak zaman dahulu, rumor tentang pemakan manusia oni telah bersembunyi dalam bayang-bayang. Menghadapi bahaya supernatural, diperlukan kekuatan supernatural. Demon Slayer Corps yang namanya samar-samar telah melindungi umat manusia dari bayang-bayang selama berabad-abad.",
+                trailer: "https://www.youtube.com/embed/VQGCKyvzIM4",
+                studio: "ufotable",
+                premiered: "Spring 2019"
+            },
+            {
+                id: 3,
+                title: "My Hero Academia",
+                titleJP: "僕のヒーローアカデミア",
+                genres: ["Action", "School", "Superhero"],
+                rating: 8.4,
+                year: 2016,
+                status: "Ongoing",
+                episodes: 113,
+                duration: "24 min",
+                poster: "https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=300&h=400&fit=crop",
+                banner: "https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=1200&h=400&fit=crop",
+                synopsis: "Munculnya 'quirks', kekuatan super yang baru ditemukan, telah berkembang pesat selama bertahun-tahun dengan 80 persen kemanusiaan memiliki berbagai kemampuan dari manipulasi elemen hingga shapeshifting. Ini meninggalkan sisa populasi benar-benar tanpa daya.",
+                trailer: "https://www.youtube.com/embed/D5fYOnwYkj4",
+                studio: "Bones",
+                premiered: "Spring 2016"
+            },
+            {
+                id: 4,
+                title: "Jujutsu Kaisen",
+                titleJP: "呪術廻戦",
+                genres: ["Action", "Supernatural", "School"],
+                rating: 8.6,
+                year: 2020,
+                status: "Ongoing",
+                episodes: 47,
+                duration: "24 min",
+                poster: "https://images.unsplash.com/photo-1613376023733-0a73315d9b06?w=300&h=400&fit=crop",
+                banner: "https://images.unsplash.com/photo-1613376023733-0a73315d9b06?w=1200&h=400&fit=crop",
+                synopsis: "Dunia tempat kita hidup berbeda dengan dunia tempat iblis hidup. Namun demikian, iblis berkeliaran di antara kita semua, mengarah pada peristiwa tragis yang dapat ditemukan bahkan dalam kehidupan sehari-hari yang paling normal.",
+                trailer: "https://www.youtube.com/embed/4A_X-Dvl0ws",
+                studio: "MAPPA",
+                premiered: "Fall 2020"
+            },
+            {
+                id: 5,
+                title: "One Piece",
+                titleJP: "ワンピース",
+                genres: ["Action", "Adventure", "Fantasy"],
+                rating: 8.9,
+                year: 1999,
+                status: "Ongoing",
+                episodes: 1050,
+                duration: "24 min",
+                poster: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?w=300&h=400&fit=crop",
+                banner: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?w=1200&h=400&fit=crop",
+                synopsis: "Monkey D. Luffy selalu bermimpi menjadi bajak laut sejak dia kecil. Impiannya adalah memiliki harta karun legendaris yang ditinggalkan oleh almarhum Raja Bajak Laut, Gol D. Roger. Buah yang dia makan memberikan tubuhnya seperti properti karet.",
+                trailer: "https://www.youtube.com/embed/MCb13lbVGE0",
+                studio: "Toei Animation",
+                premiered: "Fall 1999"
+            },
+            {
+                id: 6,
+                title: "Spy x Family",
+                titleJP: "スパイファミリー",
+                genres: ["Action", "Comedy", "Slice of Life"],
+                rating: 8.5,
+                year: 2022,
+                status: "Ongoing",
+                episodes: 25,
+                duration: "24 min",
+                poster: "https://images.unsplash.com/photo-1611329532992-0b51d00b7ff5?w=300&h=400&fit=crop",
+                banner: "https://images.unsplash.com/photo-1611329532992-0b51d00b7ff5?w=1200&h=400&fit=crop",
+                synopsis: "Semua orang memiliki bagian dari diri mereka yang tidak dapat mereka tunjukkan kepada orang lain. Di era di mana negara-negara di seluruh dunia terlibat dalam perang informasi yang sengit yang tersembunyi dari mata publik, Ostania dan Westalis berada dalam perang dingin selama beberapa dekade.",
+                trailer: "https://www.youtube.com/embed/h5M4GDjnaGg",
+                studio: "Wit Studio, CloverWorks",
+                premiered: "Spring 2022"
+            }
+        ];
+
+        // Komponen Header
+        function Header({ onSearch, notifications, onProfileClick }) {
+            const [searchQuery, setSearchQuery] = useState('');
+            const [showNotif, setShowNotif] = useState(false);
+
+            const handleSearch = (e) => {
+                e.preventDefault();
+                onSearch(searchQuery);
+            };
+
+            return (
+                <header className="gradient-bg text-white shadow-lg sticky top-0 z-50">
+                    <div className="container mx-auto px-4 py-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                                <i className="fas fa-play-circle text-3xl"></i>
+                                <h1 className="text-2xl font-bold">AnimeStream</h1>
+                            </div>
+                            
+                            <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-8">
+                                <div className="relative w-full">
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Cari anime..."
+                                        className="w-full px-4 py-2 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-white"
+                                    />
+                                    <button type="submit" className="absolute right-3 top-2.5 text-gray-600">
+                                        <i className="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+
+                            <div className="flex items-center space-x-4">
+                                <div className="relative">
+                                    <button 
+                                        onClick={() => setShowNotif(!showNotif)}
+                                        className="relative p-2 hover:bg-white/20 rounded-full transition"
+                                    >
+                                        <i className="fas fa-bell text-xl"></i>
+                                        {notifications.length > 0 && (
+                                            <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                                {notifications.length}
+                                            </span>
+                                        )}
+                                    </button>
+                                    
+                                    {showNotif && (
+                                        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl text-gray-800 max-h-96 overflow-y-auto">
+                                            <div className="p-4 border-b">
+                                                <h3 className="font-semibold">Notifikasi</h3>
+                                            </div>
+                                            {notifications.length === 0 ? (
+                                                <p className="p-4 text-center text-gray-500">Tidak ada notifikasi</p>
+                                            ) : (
+                                                notifications.map((notif, idx) => (
+                                                    <div key={idx} className="p-4 border-b hover:bg-gray-50">
+                                                        <p className="text-sm font-medium">{notif.title}</p>
+                                                        <p className="text-xs text-gray-600 mt-1">{notif.message}</p>
+                                                        <p className="text-xs text-gray-400 mt-1">{notif.time}</p>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <button 
+                                    onClick={onProfileClick}
+                                    className="flex items-center space-x-2 hover:bg-white/20 px-3 py-2 rounded-full transition"
+                                >
+                                    <img 
+                                        src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" 
+                                        alt="Profile" 
+                                        className="w-8 h-8 rounded-full"
+                                    />
+                                    <span className="hidden md:inline">Profile</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+            );
+        }
+
+        // Komponen Announcement
+        function Announcement() {
+            const announcements = [
+                { id: 1, title: "🎉 Episode Baru Attack on Titan!", text: "Episode final telah tersedia!" },
+                { id: 2, title: "📢 Maintenance Server", text: "Maintenance dijadwalkan tanggal 15 Feb" },
+                { id: 3, title: "⭐ Anime Baru Ditambahkan", text: "5 anime baru minggu ini!" }
+            ];
+
+            const [currentIndex, setCurrentIndex] = useState(0);
+
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setCurrentIndex((prev) => (prev + 1) % announcements.length);
+                }, 5000);
+                return () => clearInterval(timer);
+            }, []);
+
+            return (
+                <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6">
+                    <div className="flex items-center">
+                        <i className="fas fa-bullhorn text-yellow-600 mr-3"></i>
+                        <div className="flex-1">
+                            <p className="font-semibold text-gray-800">{announcements[currentIndex].title}</p>
+                            <p className="text-sm text-gray-600">{announcements[currentIndex].text}</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Komponen Anime Card
+        function AnimeCard({ anime, onClick }) {
+            return (
+                <div 
+                    onClick={() => onClick(anime)}
+                    className="anime-card bg-white rounded-lg overflow-hidden shadow-md cursor-pointer"
+                >
+                    <div className="relative">
+                        <img 
+                            src={anime.poster} 
+                            alt={anime.title}
+                            className="w-full h-64 object-cover"
+                        />
+                        <div className="absolute top-2 right-2 bg-yellow-400 text-gray-900 px-2 py-1 rounded-full text-xs font-bold">
+                            ⭐ {anime.rating}
+                        </div>
+                        <div className="absolute bottom-2 left-2 bg-purple-600 text-white px-2 py-1 rounded text-xs">
+                            {anime.episodes} Eps
+                        </div>
+                    </div>
+                    <div className="p-4">
+                        <h3 className="font-semibold text-gray-800 truncate">{anime.title}</h3>
+                        <p className="text-sm text-gray-500 mb-2">{anime.titleJP}</p>
+                        <div className="flex flex-wrap gap-1 mb-2">
+                            {anime.genres.slice(0, 2).map((genre, idx) => (
+                                <span key={idx} className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs">
+                                    {genre}
+                                </span>
+                            ))}
+                        </div>
+                        <p className="text-xs text-gray-500">{anime.year} • {anime.status}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // Komponen Home Tab
+        function HomeTab({ onAnimeClick, user }) {
+            const [selectedLetter, setSelectedLetter] = useState('All');
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+            const filteredAnime = selectedLetter === 'All' 
+                ? animeData 
+                : animeData.filter(anime => anime.title.startsWith(selectedLetter));
+
+            return (
+                <div className="container mx-auto px-4 py-6">
+                    <Announcement />
+
+                    {/* User Preview */}
+                    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                        <div className="flex items-center space-x-4">
+                            <img 
+                                src={user.photo} 
+                                alt={user.name}
+                                className="w-16 h-16 rounded-full object-cover"
+                            />
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-800">Selamat datang, {user.name}! 👋</h2>
+                                <p className="text-gray-600">Sudah nonton {user.watchedCount} anime</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Rekomendasi */}
+                    <section className="mb-8">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">🔥 Rekomendasi Untuk Kamu</h2>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                            {animeData.slice(0, 6).map(anime => (
+                                <AnimeCard key={anime.id} anime={anime} onClick={onAnimeClick} />
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* A-Z Filter */}
+                    <section>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">📚 Anime A-Z</h2>
+                        
+                        <div className="bg-white rounded-lg shadow-md p-4 mb-4 overflow-x-auto scroll-container">
+                            <div className="flex space-x-2">
+                                <button
+                                    onClick={() => setSelectedLetter('All')}
+                                    className={`px-3 py-2 rounded-lg font-medium transition ${
+                                        selectedLetter === 'All' 
+                                            ? 'bg-purple-600 text-white' 
+                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                    }`}
+                                >
+                                    All
+                                </button>
+                                {alphabet.map(letter => (
+                                    <button
+                                        key={letter}
+                                        onClick={() => setSelectedLetter(letter)}
+                                        className={`px-3 py-2 rounded-lg font-medium transition ${
+                                            selectedLetter === letter 
+                                                ? 'bg-purple-600 text-white' 
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                        }`}
+                                    >
+                                        {letter}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                            {filteredAnime.map(anime => (
+                                <AnimeCard key={anime.id} anime={anime} onClick={onAnimeClick} />
+                            ))}
+                        </div>
+                    </section>
+                </div>
+            );
+        }
+
+        // Komponen History Tab
+        function HistoryTab({ watchHistory, onAnimeClick, onRemoveHistory }) {
+            return (
+                <div className="container mx-auto px-4 py-6">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6">📺 Riwayat Tontonan</h2>
+                    
+                    {watchHistory.length === 0 ? (
+                        <div className="bg-white rounded-lg shadow-md p-12 text-center">
+                            <i className="fas fa-history text-6xl text-gray-300 mb-4"></i>
+                            <p className="text-gray-500 text-lg">Belum ada riwayat tontonan</p>
+                            <p className="text-gray-400 mt-2">Mulai nonton anime favoritmu!</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {watchHistory.map((item, idx) => {
+                                const anime = animeData.find(a => a.id === item.animeId);
+                                if (!anime) return null;
+                                
+                                return (
+                                    <div key={idx} className="bg-white rounded-lg shadow-md p-4 flex items-center space-x-4">
+                                        <img 
+                                            src={anime.poster} 
+                                            alt={anime.title}
+                                            className="w-24 h-32 object-cover rounded cursor-pointer"
+                                            onClick={() => onAnimeClick(anime)}
+                                        />
+                                        <div className="flex-1">
+                                            <h3 
+                                                className="font-bold text-lg text-gray-800 cursor-pointer hover:text-purple-600"
+                                                onClick={() => onAnimeClick(anime)}
+                                            >
+                                                {anime.title}
+                                            </h3>
+                                            <p className="text-gray-600 text-sm mb-2">{anime.titleJP}</p>
+                                            <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                                <span>Episode {item.lastEpisode}</span>
+                                                <span>•</span>
+                                                <span>{item.progress}%</span>
+                                                <span>•</span>
+                                                <span>{item.lastWatched}</span>
+                                            </div>
+                                            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                                <div 
+                                                    className="bg-purple-600 h-2 rounded-full" 
+                                                    style={{width: `${item.progress}%`}}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => onRemoveHistory(idx)}
+                                            className="text-red-500 hover:text-red-700 p-2"
+                                        >
+                                            <i className="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Komponen Profile Tab
+        function ProfileTab({ user, onUpdateUser, onLogout }) {
+            const [editing, setEditing] = useState(false);
+            const [formData, setFormData] = useState(user);
+
+            const handleSave = () => {
+                onUpdateUser(formData);
+                setEditing(false);
+            };
+
+            return (
+                <div className="container mx-auto px-4 py-6 max-w-2xl">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6">👤 Profil Saya</h2>
+                    
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                        <div className="flex flex-col items-center mb-6">
+                            <img 
+                                src={formData.photo} 
+                                alt={formData.name}
+                                className="w-32 h-32 rounded-full object-cover mb-4"
+                            />
+                            {editing && (
+                                <input
+                                    type="text"
+                                    value={formData.photo}
+                                    onChange={(e) => setFormData({...formData, photo: e.target.value})}
+                                    placeholder="URL Foto"
+                                    className="border rounded px-3 py-2 w-full max-w-md text-sm"
+                                />
+                            )}
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Nama</label>
+                                {editing ? (
+                                    <input
+                                        type="text"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                        className="border rounded px-3 py-2 w-full"
+                                    />
+                                ) : (
+                                    <p className="text-gray-800">{formData.name}</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                {editing ? (
+                                    <input
+                                        type="email"
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                        className="border rounded px-3 py-2 w-full"
+                                    />
+                                ) : (
+                                    <p className="text-gray-800">{formData.email}</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Lahir</label>
+                                {editing ? (
+                                    <input
+                                        type="date"
+                                        value={formData.birthdate}
+                                        onChange={(e) => setFormData({...formData, birthdate: e.target.value})}
+                                        className="border rounded px-3 py-2 w-full"
+                                    />
+                                ) : (
+                                    <p className="text-gray-800">{formData.birthdate}</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                                {editing ? (
+                                    <textarea
+                                        value={formData.bio}
+                                        onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                                        className="border rounded px-3 py-2 w-full h-24"
+                                    />
+                                ) : (
+                                    <p className="text-gray-800">{formData.bio}</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Genre Favorit</label>
+                                {editing ? (
+                                    <input
+                                        type="text"
+                                        value={formData.favoriteGenres}
+                                        onChange={(e) => setFormData({...formData, favoriteGenres: e.target.value})}
+                                        className="border rounded px-3 py-2 w-full"
+                                        placeholder="Action, Adventure, Fantasy"
+                                    />
+                                ) : (
+                                    <p className="text-gray-800">{formData.favoriteGenres}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex space-x-3">
+                            {editing ? (
+                                <>
+                                    <button 
+                                        onClick={handleSave}
+                                        className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+                                    >
+                                        <i className="fas fa-save mr-2"></i>
+                                        Simpan
+                                    </button>
+                                    <button 
+                                        onClick={() => {
+                                            setEditing(false);
+                                            setFormData(user);
+                                        }}
+                                        className="flex-1 bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition"
+                                    >
+                                        Batal
+                                    </button>
+                                </>
+                            ) : (
+                                <button 
+                                    onClick={() => setEditing(true)}
+                                    className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+                                >
+                                    <i className="fas fa-edit mr-2"></i>
+                                    Edit Profil
+                                </button>
+                            )}
+                        </div>
+
+                        <button 
+                            onClick={onLogout}
+                            className="w-full mt-3 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+                        >
+                            <i className="fas fa-sign-out-alt mr-2"></i>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Komponen Detail Anime
+        function AnimeDetail({ anime, onClose, onAddToHistory }) {
+            const [selectedEpisode, setSelectedEpisode] = useState(1);
+            const [comments, setComments] = useState([
+                { id: 1, user: "Otaku123", text: "Anime terbaik tahun ini!", time: "2 jam lalu", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Otaku123" },
+                { id: 2, user: "AnimeLover", text: "Ceritanya sangat menarik!", time: "5 jam lalu", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=AnimeLover" }
+            ]);
+            const [newComment, setNewComment] = useState('');
+            const [activeTab, setActiveTab] = useState('episodes');
+
+            const handleAddComment = (e) => {
+                e.preventDefault();
+                if (newComment.trim()) {
+                    setComments([
+                        { 
+                            id: Date.now(), 
+                            user: "You", 
+                            text: newComment, 
+                            time: "Baru saja",
+                            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                        },
+                        ...comments
+                    ]);
+                    setNewComment('');
+                }
+            };
+
+            const handleWatchEpisode = () => {
+                onAddToHistory({
+                    animeId: anime.id,
+                    lastEpisode: selectedEpisode,
+                    progress: Math.floor(Math.random() * 100),
+                    lastWatched: 'Baru saja'
+                });
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-75 z-50 overflow-y-auto">
+                    <div className="min-h-screen px-4 py-8">
+                        <div className="max-w-6xl mx-auto bg-white rounded-lg overflow-hidden">
+                            {/* Header */}
+                            <div className="relative">
+                                <img 
+                                    src={anime.banner} 
+                                    alt={anime.title}
+                                    className="w-full h-64 object-cover"
+                                />
+                                <button 
+                                    onClick={onClose}
+                                    className="absolute top-4 right-4 bg-black bg-opacity-50 text-white w-10 h-10 rounded-full hover:bg-opacity-75 transition"
+                                >
+                                    <i className="fas fa-times"></i>
+                                </button>
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-6">
+                                    <h1 className="text-3xl font-bold text-white mb-2">{anime.title}</h1>
+                                    <p className="text-gray-300">{anime.titleJP}</p>
+                                </div>
+                            </div>
+
+                            <div className="p-6">
+                                {/* Info */}
+                                <div className="flex flex-wrap gap-4 mb-6">
+                                    <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full font-bold">
+                                        ⭐ {anime.rating}
+                                    </span>
+                                    <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">
+                                        {anime.year}
+                                    </span>
+                                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                                        {anime.episodes} Episodes
+                                    </span>
+                                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">
+                                        {anime.status}
+                                    </span>
+                                    <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full">
+                                        {anime.duration}
+                                    </span>
+                                </div>
+
+                                {/* Genres */}
+                                <div className="flex flex-wrap gap-2 mb-6">
+                                    {anime.genres.map((genre, idx) => (
+                                        <span key={idx} className="bg-gray-200 text-gray-700 px-3 py-1 rounded">
+                                            {genre}
+                                        </span>
+                                    ))}
+                                </div>
+
+                                {/* Synopsis */}
+                                <div className="mb-6">
+                                    <h2 className="text-xl font-bold text-gray-800 mb-3">📖 Sinopsis</h2>
+                                    <p className="text-gray-600 leading-relaxed">{anime.synopsis}</p>
+                                </div>
+
+                                {/* Additional Info */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                    <div>
+                                        <p className="text-sm text-gray-500">Studio</p>
+                                        <p className="font-semibold text-gray-800">{anime.studio}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Premiered</p>
+                                        <p className="font-semibold text-gray-800">{anime.premiered}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Status</p>
+                                        <p className="font-semibold text-gray-800">{anime.status}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Duration</p>
+                                        <p className="font-semibold text-gray-800">{anime.duration}</p>
+                                    </div>
+                                </div>
+
+                                {/* Tabs */}
+                                <div className="border-b mb-6">
+                                    <div className="flex space-x-6">
+                                        <button
+                                            onClick={() => setActiveTab('episodes')}
+                                            className={`pb-3 font-medium transition ${activeTab === 'episodes' ? 'tab-active' : 'text-gray-500 hover:text-gray-700'}`}
+                                        >
+                                            <i className="fas fa-list mr-2"></i>
+                                            Episode
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('comments')}
+                                            className={`pb-3 font-medium transition ${activeTab === 'comments' ? 'tab-active' : 'text-gray-500 hover:text-gray-700'}`}
+                                        >
+                                            <i className="fas fa-comments mr-2"></i>
+                                            Komentar ({comments.length})
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Episodes Tab */}
+                                {activeTab === 'episodes' && (
+                                    <div>
+                                        {/* Video Player */}
+                                        <div className="mb-6">
+                                            <div className="video-player bg-black rounded-lg overflow-hidden mb-4">
+                                                <iframe
+                                                    src={anime.trailer}
+                                                    className="w-full h-full"
+                                                    frameBorder="0"
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allowFullScreen
+                                                ></iframe>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <h3 className="text-lg font-semibold">Episode {selectedEpisode}</h3>
+                                                <div className="flex space-x-2">
+                                                    <button 
+                                                        onClick={handleWatchEpisode}
+                                                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+                                                    >
+                                                        <i className="fas fa-play mr-2"></i>
+                                                        Tonton Sekarang
+                                                    </button>
+                                                    <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                                                        <i className="fas fa-download mr-2"></i>
+                                                        Download
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Episode List */}
+                                        <h3 className="text-lg font-semibold mb-3">Daftar Episode</h3>
+                                        <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
+                                            {[...Array(anime.episodes)].map((_, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => setSelectedEpisode(idx + 1)}
+                                                    className={`py-2 rounded-lg font-medium transition ${
+                                                        selectedEpisode === idx + 1
+                                                            ? 'bg-purple-600 text-white'
+                                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                    }`}
+                                                >
+                                                    {idx + 1}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Comments Tab */}
+                                {activeTab === 'comments' && (
+                                    <div>
+                                        {/* Add Comment */}
+                                        <form onSubmit={handleAddComment} className="mb-6">
+                                            <textarea
+                                                value={newComment}
+                                                onChange={(e) => setNewComment(e.target.value)}
+                                                placeholder="Tulis komentar..."
+                                                className="w-full border rounded-lg px-4 py-3 comment-input resize-none"
+                                                rows="3"
+                                            ></textarea>
+                                            <button 
+                                                type="submit"
+                                                className="mt-2 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+                                            >
+                                                <i className="fas fa-paper-plane mr-2"></i>
+                                                Kirim Komentar
+                                            </button>
+                                        </form>
+
+                                        {/* Comments List */}
+                                        <div className="space-y-4">
+                                            {comments.map(comment => (
+                                                <div key={comment.id} className="flex space-x-3 bg-gray-50 p-4 rounded-lg">
+                                                    <img 
+                                                        src={comment.avatar} 
+                                                        alt={comment.user}
+                                                        className="w-10 h-10 rounded-full"
+                                                    />
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center space-x-2 mb-1">
+                                                            <p className="font-semibold text-gray-800">{comment.user}</p>
+                                                            <span className="text-xs text-gray-500">{comment.time}</span>
+                                                        </div>
+                                                        <p className="text-gray-700">{comment.text}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Main App Component
+        function App() {
+            const [activeTab, setActiveTab] = useState('home');
+            const [selectedAnime, setSelectedAnime] = useState(null);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [user, setUser] = useState({
+                name: 'Anime Lover',
+                email: 'anime@example.com',
+                photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+                birthdate: '2000-01-01',
+                bio: 'Pecinta anime sejati! 🎌',
+                favoriteGenres: 'Action, Adventure, Fantasy',
+                watchedCount: 15
+            });
+            const [watchHistory, setWatchHistory] = useState([
+                { animeId: 1, lastEpisode: 5, progress: 60, lastWatched: '2 hari lalu' },
+                { animeId: 2, lastEpisode: 12, progress: 100, lastWatched: '1 minggu lalu' }
+            ]);
+            const [notifications, setNotifications] = useState([
+                { title: 'Episode Baru!', message: 'Attack on Titan episode 87 telah tersedia', time: '1 jam lalu' },
+                { title: 'Anime Baru', message: '5 anime baru ditambahkan minggu ini', time: '2 hari lalu' }
+            ]);
+
+            const handleSearch = (query) => {
+                setSearchQuery(query);
+                // Implementasi pencarian bisa ditambahkan di sini
+                alert(`Mencari: ${query}`);
+            };
+
+            const handleAddToHistory = (historyItem) => {
+                const existingIndex = watchHistory.findIndex(h => h.animeId === historyItem.animeId);
+                if (existingIndex >= 0) {
+                    const newHistory = [...watchHistory];
+                    newHistory[existingIndex] = historyItem;
+                    setWatchHistory(newHistory);
+                } else {
+                    setWatchHistory([historyItem, ...watchHistory]);
+                }
+                alert('Ditambahkan ke riwayat tontonan!');
+            };
+
+            const handleRemoveHistory = (index) => {
+                setWatchHistory(watchHistory.filter((_, idx) => idx !== index));
+            };
+
+            const handleUpdateUser = (newUserData) => {
+                setUser(newUserData);
+                alert('Profil berhasil diperbarui!');
+            };
+
+            const handleLogout = () => {
+                if (confirm('Yakin ingin logout?')) {
+                    alert('Logout berhasil!');
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    <Header 
+                        onSearch={handleSearch} 
+                        notifications={notifications}
+                        onProfileClick={() => setActiveTab('profile')}
+                    />
+
+                    {/* Content */}
+                    <main className="pb-20">
+                        {activeTab === 'home' && (
+                            <HomeTab onAnimeClick={setSelectedAnime} user={user} />
+                        )}
+                        {activeTab === 'history' && (
+                            <HistoryTab 
+                                watchHistory={watchHistory} 
+                                onAnimeClick={setSelectedAnime}
+                                onRemoveHistory={handleRemoveHistory}
+                            />
+                        )}
+                        {activeTab === 'profile' && (
+                            <ProfileTab 
+                                user={user} 
+                                onUpdateUser={handleUpdateUser}
+                                onLogout={handleLogout}
+                            />
+                        )}
+                    </main>
+
+                    {/* Bottom Navigation */}
+                    <nav className="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t z-40">
+                        <div className="container mx-auto px-4">
+                            <div className="flex justify-around">
+                                <button
+                                    onClick={() => setActiveTab('home')}
+                                    className={`flex-1 py-4 text-center transition ${
+                                        activeTab === 'home' 
+                                            ? 'text-purple-600 border-t-2 border-purple-600' 
+                                            : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                    <i className="fas fa-home text-xl mb-1 block"></i>
+                                    <span className="text-xs">Beranda</span>
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('history')}
+                                    className={`flex-1 py-4 text-center transition ${
+                                        activeTab === 'history' 
+                                            ? 'text-purple-600 border-t-2 border-purple-600' 
+                                            : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                    <i className="fas fa-history text-xl mb-1 block"></i>
+                                    <span className="text-xs">Riwayat</span>
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('profile')}
+                                    className={`flex-1 py-4 text-center transition ${
+                                        activeTab === 'profile' 
+                                            ? 'text-purple-600 border-t-2 border-purple-600' 
+                                            : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                    <i className="fas fa-user text-xl mb-1 block"></i>
+                                    <span className="text-xs">Profil</span>
+                                </button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    {/* Anime Detail Modal */}
+                    {selectedAnime && (
+                        <AnimeDetail 
+                            anime={selectedAnime} 
+                            onClose={() => setSelectedAnime(null)}
+                            onAddToHistory={handleAddToHistory}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
